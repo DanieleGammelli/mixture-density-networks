@@ -46,11 +46,10 @@ class MDN(nn.Module):
         return pi, loc, Sigma_tril
 
 class PyroMDN(nn.Module):
-    def __init__(self, input_dim=1, hidden_dim=20, output_dim=1, K=3, use_cuda=False, verbose=False):
+    def __init__(self, input_dim=1, hidden_dim=20, output_dim=1, K=3, use_cuda=False):
         super(PyroMDN, self).__init__()
         self.mdn = MDN(input_dim, hidden_dim, output_dim, K)
         
-        self.verbose = verbose
         self.K = K
         self.D = output_dim
         if use_cuda:
@@ -69,7 +68,6 @@ class PyroMDN(nn.Module):
         assert Sigma_trilT.shape == (self.K, N, D, D)
         with pyro.plate("data", N):
             assignment = pyro.sample("assignment", dist.Categorical(pi))
-            if self.verbose: print("assignment", assignment.shape)
             if len(assignment.shape) == 1:
                 _mu = torch.gather(locT, 0, assignment.view(1, -1, 1))[0]
                 _scale_tril = torch.gather(Sigma_trilT, 0, assignment.view(1, -1, 1, 1))[0]
